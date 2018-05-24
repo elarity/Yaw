@@ -36,7 +36,14 @@ class EventEmitter{
     $this->once_events[ $event ][] = $callback;    
   }
 
-  public function on( $event, array $args = [] ){
+  
+  public function on( $event, $callback ){
+    if( isset( $this->once_events[ $event ] ) ){
+      $callback = $this->once_events[ $event ];
+      call_user_func( $callback, $args = [] );
+    } else {
+      $this->once_events[ $event ] = $callback;
+    }
   }
 
   /*

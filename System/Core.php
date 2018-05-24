@@ -2,6 +2,7 @@
 namespace System;
 use System\Component\EventEmitter;
 use System\Event\Factory;
+use System\Connection\Tcp;
 
 abstract class Core{
 
@@ -13,7 +14,7 @@ abstract class Core{
   /*
    * @desc : 事件监听器
    */
-  protected static $eventLoop = null;
+  public static $eventLoop = null;
 
   /*
    * @desc : 默认配置选项
@@ -24,13 +25,27 @@ abstract class Core{
     'task_worker_num' => 0,
   );
 
+  public static $protocol = '';
+  protected static $host = '0.0.0.0';
+  protected static $port = 9999;
+
+  /*
+   *
+   */
+  protected static $eventEmitter = null;
+
   /*
    * @desc : 初始化core
    */
-  public function __construct(){
+  public function __construct( $protocol, $host = '0.0.0.0', $port = 9999 ){
+    self::$protocol = $protocol;
+    self::$host = $host;
+    self::$port = $port;
 
     // 获取事件监听器
     self::$eventLoop = Factory::create(); 
+
+    self::$eventEmitter = new eventEmitter();
 
   }
 
@@ -82,7 +97,7 @@ abstract class Core{
         $eventLoop = self::$eventLoop;
 		
         //每个reactor进程都进入 事件循环
-        $eventLoop->add( $listenSocket, \Event::READ, self::acceptTcpConnect( $listenSocket ) );
+        $eventLoop->add( $listenSocket, \Event::READ, array( '\System\Core', 'acceptTcpConnect' ) );
  	$eventLoop->loop();
    	   	
       }else if( 0 > $pid ){
@@ -107,7 +122,7 @@ abstract class Core{
    */
   private static function createListenSocket(){
     $listenSocket = socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
-    socket_bind( $listenSocket, '0.0.0.0', 9999 );
+    socket_bind( $listenSocket, self::$host, self::$port );
     socket_listen( $listenSocket );
     socket_set_nonblock( $listenSocket );
     self::$listenSocket = $listenSocket;
@@ -116,14 +131,26 @@ abstract class Core{
   /*
    * @desc : 
    */
-  private static function acceptTcpConnect( $listenSocket ){
+  public static function acceptTcpConnect( $listenSocket ){
+    // 由于监听socket是非阻塞的，所以此处accept的这样处理比较优雅，用@直接抑制错误也可以，但是比较丑陋
     if( ( $connectSocket = socket_accept( $listenSocket ) ) != false ){
-      $msg = "helloworld";
-      socket_write( $connectSocket, $msg, strlen( $msg ) );
+
+      //$eventEmitter = self::$eventEmitter;
+      //$eventEmitter->on( 'request', function(){} );
+  
+      $tcp = new Tcp( $connectSocket );
+      
+      // socket_read是阻塞式的
+      //$content = socket_read( $connectSocket, 4096 );
+      //$msg = "helloworld";
+      //socket_write( $connectSocket, $msg, strlen( $msg ) );
+
     }
   }
 
   public function on( $method, \Closure $closure ){
+    $eventEmitter = self::$eventEmitter;
+    $eventEmitter->on( $method, $closure );
   } 
 
   /*

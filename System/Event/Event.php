@@ -20,12 +20,7 @@ class Event implements EventInterface{
     switch( $flag ){
       default:
         $flag = \Event::READ == $flag ? \Event::READ | \Event::PERSIST : \Event::WRITE | \Event::PERSIST ;
-        $event = new \Event( $this->_eventBase, $fd, \Event::READ | \Event::PERSIST, function( $fd ){
-          if( ( $connectSocket = socket_accept( $fd ) ) != false ){
-            $msg = "helloworld\r\n";
-            socket_write( $connectSocket, $msg, strlen( $msg ) );
-          }
-        }, $fd );
+        $event = new \Event( $this->_eventBase, $fd, \Event::READ | \Event::PERSIST, $func, $fd );
         $event->add();
  	$this->_events[ intval( $fd ) ][ $flag ] = $event;
     }

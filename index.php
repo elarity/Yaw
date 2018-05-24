@@ -11,12 +11,21 @@ function autoload( $className ){
 }
 spl_autoload_register( 'autoload' );
 
+/*
+$protocol = 'Http';
+$protocolClass = "System\\Protocol\\".$protocol;
+$protocolParser = new $protocolClass;
+print_r( $protocolParser );
+exit;
+*/
+
 // 启动一个http服务器
 $server = new System\Http( '0.0.0.0', 9999 );
 $server->set( array(
 ) );
-$server->on( 'request', function( $request, $response ){
-  echo "heelo".PHP_EOL;
+
+$server->on( 'request', function(){
+  echo "hello".PHP_EOL;
 } );
 $server->start();
 
