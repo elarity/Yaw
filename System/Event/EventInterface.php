@@ -1,7 +1,7 @@
 <?php
 namespace System\Event;
 interface EventInterface{
-  public function add(){}
-  public function del(){}
-  public function loop(){} 
+  public function add( $fd, $flag, $func, $args );
+  public function del( $fd, $flag );
+  public function loop();
 }

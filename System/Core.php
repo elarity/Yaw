@@ -15,8 +15,11 @@ abstract class Core{
    */
   protected static $eventLoop = null;
 
+  /*
+   * @desc : 默认配置选项
+   */
   protected static $setting = array(
-    'reactor_num' => 2,
+    'reactor_num' => 1,
     'worker_num' => 4,
     'task_worker_num' => 0,
   );
@@ -25,7 +28,10 @@ abstract class Core{
    * @desc : 初始化core
    */
   public function __construct(){
+
+    // 获取事件监听器
     self::$eventLoop = Factory::create(); 
+
   }
 
   /*
@@ -70,22 +76,22 @@ abstract class Core{
     for( $i = 1; $i <= self::$setting['reactor_num']; $i++ ){
       $pid = pcntl_fork();
       if( $pid == 0 ){
+ 	  
         cli_set_process_title( 'Yaw Reactor Process' );
         $listenSocket = self::$listenSocket; 
-        //每个reactor进程都进入accpet
-	while( true ){
-	  if( ( $connectSocket = socket_accept( $listenSocket ) ) != false ){
-    	    $msg = "helloworld";
-	    socket_write( $connectSocket, $msg, strlen( $msg ) );
-   	    socket_close( $connectSocket );
-	  }  
-	}
+        $eventLoop = self::$eventLoop;
+		
+        //每个reactor进程都进入 事件循环
+        $eventLoop->add( $listenSocket, \Event::READ, self::acceptTcpConnect( $listenSocket ) );
+ 	$eventLoop->loop();
+   	   	
       }else if( 0 > $pid ){
         throw new \Exception( 'pcntl_fork error.'.PHP_EOL );
       }
     }
     //worker进程 由master进程fork出来
   }
+
   public function start(){
     //self::daemonize();
     self::createListenSocket();
@@ -95,15 +101,31 @@ abstract class Core{
       sleep( 1 );
     }
   }
+
+  /*
+   * @desc : 创建监听socket
+   */
   private static function createListenSocket(){
     $listenSocket = socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
     socket_bind( $listenSocket, '0.0.0.0', 9999 );
     socket_listen( $listenSocket );
-    //socket_set_nonblock( $listenSocket );
+    socket_set_nonblock( $listenSocket );
     self::$listenSocket = $listenSocket;
   } 
+
+  /*
+   * @desc : 
+   */
+  private static function acceptTcpConnect( $listenSocket ){
+    if( ( $connectSocket = socket_accept( $listenSocket ) ) != false ){
+      $msg = "helloworld";
+      socket_write( $connectSocket, $msg, strlen( $msg ) );
+    }
+  }
+
   public function on( $method, \Closure $closure ){
   } 
+
   /*
    *
    */
