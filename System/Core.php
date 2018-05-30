@@ -55,6 +55,7 @@ abstract class Core{
   public function set( array $settting ){
         
   }
+
   /*
    *
    */
@@ -125,6 +126,7 @@ abstract class Core{
     socket_bind( $listenSocket, self::$host, self::$port );
     socket_listen( $listenSocket );
     socket_set_nonblock( $listenSocket );
+		socket_set_option( $listenSocket, SOL_SOCKET, SO_REUSEADDR, 1 );
     self::$listenSocket = $listenSocket;
   } 
 

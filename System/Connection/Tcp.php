@@ -29,11 +29,18 @@ class Tcp{
    * @desc : 接受数据
    */
   public function receive( $connectSocket ){
-     $protocol = ucfirst( $this->protocol );
-     $protocolClass = "System\\Protocol\\".$protocol;
-     $protocolParser = new $protocolClass;
-     print_r( $protocolParser );
-     echo socket_read( $connectSocket, 2048 ); 
+    $protocol = ucfirst( $this->protocol );
+    $protocolClass = "System\\Protocol\\".$protocol;
+    //$protocolParser = new $protocolClass;
+    //print_r( $protocolParser );
+    echo socket_read( $connectSocket, 2048 ); 
+		$msg = 'msg';
+		socket_write( $connectSocket, $msg, strlen( $msg ) );
+		socket_close( $connectSocket );
+    // 获取IO多路复用器 比如event select
+		// 将fd从数组中删除掉
+    $eventLoop = \System\Core::$eventLoop;
+    $eventLoop->del( $connectSocket, \Event::READ );
   }
   
 

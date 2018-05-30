@@ -22,14 +22,16 @@ class Event implements EventInterface{
         $flag = \Event::READ == $flag ? \Event::READ | \Event::PERSIST : \Event::WRITE | \Event::PERSIST ;
         $event = new \Event( $this->_eventBase, $fd, \Event::READ | \Event::PERSIST, $func, $fd );
         $event->add();
- 	$this->_events[ intval( $fd ) ][ $flag ] = $event;
+ 	      $this->_events[ intval( $fd ) ][ $flag ] = $event;
     }
   }
 
   /*
    * @desc : 
    */
-  public function del( $fd, $flag ){}
+	public function del( $fd, $flag ){
+    unset( $this->_events[ intval( $fd ) ] );
+	}
 
   /*
    * @desc : 
