@@ -123,10 +123,11 @@ abstract class Core{
    */
   private static function createListenSocket(){
     $listenSocket = socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
+		// 要在bind之前执行，这句是为了解决刚停服后，再次启动时候出现 address already in use 的异常
+		socket_set_option( $listenSocket, SOL_SOCKET, SO_REUSEADDR, 1 );
     socket_bind( $listenSocket, self::$host, self::$port );
     socket_listen( $listenSocket );
     socket_set_nonblock( $listenSocket );
-		socket_set_option( $listenSocket, SOL_SOCKET, SO_REUSEADDR, 1 );
     self::$listenSocket = $listenSocket;
   } 
 
