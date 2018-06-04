@@ -1,6 +1,12 @@
 <?php
 namespace System;
+use System\Component\EventEmitter;
+
 class Http extends Core{
+
+	private $callback = array(
+		'request',
+	);
 
   public function __construct( $host = '0.0.0.0', $port = 9999 ){
 
@@ -12,6 +18,13 @@ class Http extends Core{
 
   }
 
-  //public function __call(  ){}
+  public function on( $method, \Closure $closure ){
+		//if(  ){
+		//}
+		//echo $method.PHP_EOL;
+    //$eventEmitter = self::$eventEmitter;
+    eventEmitter::on( $method, $closure );
+    //print_r( eventEmitter::on( $method, $closure ) );
+  } 
 
 }

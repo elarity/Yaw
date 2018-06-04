@@ -32,7 +32,7 @@ abstract class Core{
   /*
    *
    */
-  protected static $eventEmitter = null;
+  //protected static $eventEmitter = null;
 
   /*
    * @desc : 初始化core
@@ -45,7 +45,7 @@ abstract class Core{
     // 获取事件监听器
     self::$eventLoop = Factory::create(); 
 
-    self::$eventEmitter = new eventEmitter();
+    //self::$eventEmitter = new eventEmitter();
 
   }
 
@@ -84,6 +84,8 @@ abstract class Core{
     }
     //echo '4 : '.posix_getpid().PHP_EOL;
   }
+
+  /**/
   private static function forkReactorProcess(){
     // master进程 
     cli_set_process_title( 'Yaw Master Process' );
@@ -99,7 +101,7 @@ abstract class Core{
 		
         //每个reactor进程都进入 事件循环
         $eventLoop->add( $listenSocket, \Event::READ, array( '\System\Core', 'acceptTcpConnect' ) );
- 	$eventLoop->loop();
+ 	      $eventLoop->loop();
    	   	
       }else if( 0 > $pid ){
         throw new \Exception( 'pcntl_fork error.'.PHP_EOL );
@@ -140,9 +142,13 @@ abstract class Core{
 
       //$eventEmitter = self::$eventEmitter;
       //$eventEmitter->on( 'request', function(){} );
+			//echo intval( $connectSocket ).PHP_EOL;
   
       $tcp = new Tcp( $connectSocket );
-      
+
+		  //$msg = 'msg';
+		  //var_dump( socket_write( $connectSocket, $msg, strlen( $msg ) ) );
+		  //socket_close( $connectSocket );
       // socket_read是阻塞式的
       //$content = socket_read( $connectSocket, 4096 );
       //$msg = "helloworld";
@@ -151,16 +157,18 @@ abstract class Core{
     }
   }
 
+	/*
   public function on( $method, \Closure $closure ){
     $eventEmitter = self::$eventEmitter;
     $eventEmitter->on( $method, $closure );
   } 
+	 */
 
   /*
    *
    */
-  public function __call( $method, $argument ){
+  //public function __call( $method, $argument ){
     //echo $method.PHP_EOL;
     //print_r( $argument );
-  }
+  //}
 }

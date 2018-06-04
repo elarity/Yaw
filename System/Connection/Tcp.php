@@ -17,15 +17,13 @@ class Tcp{
     // 将连接socket设置为非阻塞
     socket_set_nonblock( $connectSocket );
 
-    // 将连接socket加入到事件循环中
+    // 将连接socket加入到事件循环中,触发条件是一旦发现有读的可能性
     $eventLoop->add( $connectSocket, \Event::READ, array( $this, 'receive' ) );
 
   }
 
-  public function end(){} 
-
   /*
-   * @desc : 接受数据
+   * @desc : 接受数据,此乃回调函数，当收到数据时候
    */
   public function receive( $connectSocket ){
 
@@ -34,19 +32,22 @@ class Tcp{
     $protocolClass = "System\\Protocol\\".$protocol;
     $protocolParser = new $protocolClass;
 
-
 		// 接受到的数据内容
     $rawData = socket_read( $connectSocket, 2048 ); 
-		$protocolParser->decode( $rawData );
+		$request = $protocolParser->decode( $rawData );
 
-
-		$msg = 'msg';
-		socket_write( $connectSocket, $msg, strlen( $msg ) );
+		// 返回数据
+		$msg = $protocolParser->encode();
+		$rs = socket_write( $connectSocket, $msg, strlen( $msg ) );
 		socket_close( $connectSocket );
+
     // 获取IO多路复用器 比如event select
 		// 将fd从数组中删除掉
     $eventLoop = \System\Core::$eventLoop;
     $eventLoop->del( $connectSocket, \Event::READ );
+
+		$cb = EventEmitter::on( 'request', function(){} );
+	  call_user_func_array( $cb, array( $request, $request ) );	
 
   }
   

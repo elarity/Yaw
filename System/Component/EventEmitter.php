@@ -10,20 +10,20 @@ class EventEmitter{
   /*
    * 事件=》回调函数 绑定对应数组
    */
-  private $events = [];
+  private static $events = [];
   
   /*
    * 一次性事件回调 
    */
-  private $once_events = [];
+  private static $once_events = [];
 
   /*
    * @desc : 将一个事件 和 回调函数绑定起来, 一个事件可以绑定多个不同的回调函数
    * @param : event, string字符串，事件名称
    * @param : callback, Closure类型，也就是php匿名函数
    */
-  public function bind( $event, \Closure $callback ){
-    $this->events[ $event ][] = $callback;    
+  public static function bind( $event, \Closure $callback ){
+		self::$events[ $event ][] = $callback;    
   }
 
   /*
@@ -32,17 +32,17 @@ class EventEmitter{
    * @param : event, string字符串，事件名称
    * @param : callback, Closure类型，也就是php匿名函数
    */
-  public function once_bind( $event, \Closure $callback ){
-    $this->once_events[ $event ][] = $callback;    
+  public static function once_bind( $event, \Closure $callback ){
+		self::$once_events[ $event ][] = $callback;    
   }
 
   
-  public function on( $event, $callback ){
-    if( isset( $this->once_events[ $event ] ) ){
-      $callback = $this->once_events[ $event ];
-      call_user_func( $callback, $args = [] );
+  public static function on( $event, $callback ){
+    if( isset( self::$once_events[ $event ] ) ){
+      $callback = self::$once_events[ $event ];
+			return $callback;
     } else {
-      $this->once_events[ $event ] = $callback;
+			self::$once_events[ $event ] = $callback;
     }
   }
 
@@ -51,18 +51,18 @@ class EventEmitter{
    * @param : event, string字符串，事件名称
    * @param : args, 混合类型
    */
-  public function trigger( $event, array $args = [] ){
+  public static function trigger( $event, array $args = [] ){
     // 查看永久事件
-    if( isset( $this->events[ $event ] ) ){
-      $callbacks = $this->events[ $event ];
+    if( isset( self::$events[ $event ] ) ){
+      $callbacks = self::$events[ $event ];
       foreach( $callbacks as $callback_item ){
         call_user_func( $callback_item, $args );
       }
     } 
     // 查看一次性事件 
-    if( isset( $this->once_events[ $event ] ) ){
-      $callbacks = $this->once_events[ $event ];
-      unset( $this->once_events[ $event ] );
+    if( isset( self::$once_events[ $event ] ) ){
+      $callbacks = self::$once_events[ $event ];
+      unset( self::$once_events[ $event ] );
       foreach( $callbacks as $callback_item ){
         call_user_func( $callback_item, $args );
       }
@@ -73,19 +73,19 @@ class EventEmitter{
    * @desc : 删除一个事件监听
    * @param : event, string字符串，事件名称 
    */
-  public function detach( $event ){
-    unset( $this->events[ $event ] );
-    unset( $this->once_events[ $event ] );
+  public static function detach( $event ){
+    unset( self::$events[ $event ] );
+    unset( self::$once_events[ $event ] );
   }
 
   /*
    * @desc : 获取所有事件
    * @param : void
    */
-  public function get_all_event(){
+  public static function get_all_event(){
     return array(
-      'events' => $this->events,
-      'once_events' => $this->once_events,
+      'events' => self::$events,
+      'once_events' => self::$once_events,
     );
   }
  
@@ -93,9 +93,9 @@ class EventEmitter{
    * @desc : 清空所有事件
    * @param : void
    */
-  public function truncate(){
-    $this->events = [];
-    $this->once_events = [];
+  public static function truncate(){
+		self::$events = [];
+		self::$once_events = [];
   }
 
 }

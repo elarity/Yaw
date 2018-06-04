@@ -41,8 +41,8 @@ $server = new System\Http( '0.0.0.0', 9998 );
 $server->set( array(
 ) );
 
-$server->on( 'request', function(){
-  echo "hello".PHP_EOL;
+$server->on( 'request', function( $request, $response ){
+	print_r( $request );
 } );
 $server->start();
 

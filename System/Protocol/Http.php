@@ -1,10 +1,22 @@
 <?php
 namespace System\Protocol;
-use System\Connection\Response;
+use System\Connection\Request;
 
 class Http{
 
-  //private $
+  public $server = [];
+
+  public $header = [];
+
+  public $get = [];
+
+  public $post = [];
+
+  public $rawContent = [];
+
+	public function end(){
+
+	}
 
   public function decode( $rawData ){
 
@@ -13,8 +25,6 @@ class Http{
 		$get = [];
 		$post = [];
 		$rawContent = '';
-
-		echo $rawData.PHP_EOL;
 
 		// 将原始数据使用 PHP_EOL 分割,目前我还不知道使用PHP_EOL会不会有什么问题
 		$rawDataArr = explode( PHP_EOL, $rawData );
@@ -30,15 +40,16 @@ class Http{
 
 		// 首部，也就是header
 		foreach( $rawDataArr as $item ){
-			if( '' != trim( $item ) ){
+			//if( '' != trim( $item ) ){
+			if( false !== strpos( $item, ':' ) ){
 				list( $key, $value ) = explode( ':', $item );
 				$header[ strtoupper( trim( $key ) ) ] = trim( $value );
 			}
 		}
 
 		if( 'GET' === $requestMethod ){
-			print_r( $header );
-			print_r( $server );
+			//print_r( $header );
+			//print_r( $server );
 			// 
 		}
 		else if( 'POST' === $requestMethod ){
@@ -46,17 +57,32 @@ class Http{
 	  	$requestBody = array_pop( $rawDataArr );
 		}
       
-	  $response = new Response();	
-		$response->server = $server;
-		$response->header = $header;
-		$response->get = $get;
-		$response->post = $post;
-		$response->rawContent = $rawContent;
+	  $request = new Request();	
+		$request->server = $server;
+		$request->header = $header;
+		$request->get = $get;
+		$request->post = $post;
+		$request->rawContent = $rawContent;
 
-    return $response;
+    return $request;
+
   }
 
   public function encode(){
+
+		 $responseStartLine = "HTTP/1.1 200 OK".PHP_EOL;
+	  
+		 $body = json_encode( array( 'username' => 'elarity' ) );
+
+     $header = "";
+		 $header = $header."Content-Type: text/html".PHP_EOL;
+		 $header = $header."Content-Length: ".strlen( $body ).PHP_EOL;
+     $header = $header.PHP_EOL;
+
+		 $content = $responseStartLine.$header.$body;
+
+		 return $content;
+
   }  
 
 

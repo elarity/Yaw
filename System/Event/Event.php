@@ -37,7 +37,8 @@ class Event implements EventInterface{
    * @desc : 
    */
   public function loop(){
-    return $this->_eventBase->loop(); 
+    //return $this->_eventBase->loop(); 
+    $this->_eventBase->loop(); 
   }
 
   public function getEventBase(){
