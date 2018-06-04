@@ -28,13 +28,6 @@ function autoload( $className ){
 }
 spl_autoload_register( 'autoload' );
 
-/*
-$protocol = 'Http';
-$protocolClass = "System\\Protocol\\".$protocol;
-$protocolParser = new $protocolClass;
-print_r( $protocolParser );
-exit;
-*/
 
 // 启动一个http服务器
 $server = new System\Http( '0.0.0.0', 9998 );
@@ -42,7 +35,11 @@ $server->set( array(
 ) );
 
 $server->on( 'request', function( $request, $response ){
-	print_r( $request );
+	//print_r( $request );
+	//print_r( $response );
+
+  $response->end('hello world');
+
 } );
 $server->start();
 

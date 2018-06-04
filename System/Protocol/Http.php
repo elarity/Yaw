@@ -14,10 +14,6 @@ class Http{
 
   public $rawContent = [];
 
-	public function end(){
-
-	}
-
   public function decode( $rawData ){
 
 		$server = [];
@@ -32,10 +28,18 @@ class Http{
 		// 请求行,或者 我个人称为 请求起始行
 		$requestStartLine = $rawDataArr[ 0 ];
 		unset( $rawDataArr[ 0 ] );
-		list( $requestMethod, $requestPathInfo, $httpVersion ) = explode( ' ', $requestStartLine );
-
+		list( $requestMethod, $requestUri, $httpVersion ) = explode( ' ', $requestStartLine );
+		// 初始化到系统常量中
 		$server['METHOD'] = trim( $requestMethod );
-		$server['PATH_INFO'] = trim( $requestPathInfo );
+    // 在get方法中，可能存在如下方式 http://www.x.com/api?username=pangzi
+		if( false !== strpos( $requestUri, '?' ) ){
+			list( $pathInfo, $queryString ) = explode( '?', $requestUri );
+		} else {
+		  $pathInfo = $pathInfo;	
+		  $queryString = '';
+		}
+		$server['PATH_INFO'] = trim( $pathInfo );
+		$server['QUERY_STRING'] = trim( $queryString );
 		$server['HTTP_VERSION'] = trim( $httpVersion );
 
 		// 首部，也就是header
@@ -47,12 +51,23 @@ class Http{
 			}
 		}
 
-		if( 'GET' === $requestMethod ){
-			//print_r( $header );
-			//print_r( $server );
-			// 
+		// 主体 body，当然了在GET情况下直接忽略body体中的数据，但是需要解析query string
+		if( '' !== $queryString ){
+		  // username=elarity&password=123454&option=rem 
+			$getArr = explode( '&', $queryString );
+			/*
+			[0] => username=elarity
+      [1] => password=123454
+      [2] => option=rem
+      */
+			foreach( $getArr as $getDataItem ){
+				list( $queryKey, $queryValue ) = explode( '=', $getDataItem );
+				$get[ $queryKey ] = $queryValue;
+			}
 		}
-		else if( 'POST' === $requestMethod ){
+
+		// 在POST方法下，收集body信息，但是不能忽略queryString
+		if( 'POST' === $requestMethod ){
 		  // 主体
 	  	$requestBody = array_pop( $rawDataArr );
 		}

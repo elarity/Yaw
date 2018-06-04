@@ -1,6 +1,7 @@
 <?php
 namespace System\Connection;
 use System\Component\EventEmitter; 
+use System\Connection\Request;
 
 class Tcp{
 
@@ -38,16 +39,21 @@ class Tcp{
 
 		// 返回数据
 		$msg = $protocolParser->encode();
-		$rs = socket_write( $connectSocket, $msg, strlen( $msg ) );
-		socket_close( $connectSocket );
+		//$rs = socket_write( $connectSocket, $msg, strlen( $msg ) );
+		//socket_close( $connectSocket );
+
+    //
+		$response = new Response( $connectSocket );
+
+		// 执行回调函数
+		$cb = EventEmitter::on( 'request', function(){} );
+	  call_user_func_array( $cb, array( $request, $response ) );	
 
     // 获取IO多路复用器 比如event select
 		// 将fd从数组中删除掉
     $eventLoop = \System\Core::$eventLoop;
     $eventLoop->del( $connectSocket, \Event::READ );
 
-		$cb = EventEmitter::on( 'request', function(){} );
-	  call_user_func_array( $cb, array( $request, $request ) );	
 
   }
   
