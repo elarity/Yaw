@@ -35,10 +35,10 @@ $server->set( array(
 ) );
 
 $server->on( 'request', function( $request, $response ){
+
 	//print_r( $request );
 	//print_r( $response );
-
-  $response->end('hello world');
+  $response->end('hello world'.PHP_EOL);
 
 } );
 $server->start();

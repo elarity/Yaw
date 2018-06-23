@@ -54,7 +54,6 @@ class Tcp{
     $eventLoop = \System\Core::$eventLoop;
     $eventLoop->del( $connectSocket, \Event::READ );
 
-
   }
   
 

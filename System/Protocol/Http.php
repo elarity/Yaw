@@ -4,16 +4,6 @@ use System\Connection\Request;
 
 class Http{
 
-  public $server = [];
-
-  public $header = [];
-
-  public $get = [];
-
-  public $post = [];
-
-  public $rawContent = [];
-
   public function decode( $rawData ){
 
 		$server = [];
@@ -23,9 +13,16 @@ class Http{
 		$rawContent = '';
 
 		// 将原始数据使用 PHP_EOL 分割,目前我还不知道使用PHP_EOL会不会有什么问题
-		$rawDataArr = explode( PHP_EOL, $rawData );
+		/*
+			0 => request-line
+			     request-header
 
-		// 请求行,或者 我个人称为 请求起始行
+      1 => request-body
+		 */
+		$rawDataArr = explode( "\r\n\r\n", $rawData, 2 );
+
+
+		// 请求行,或者 我个人称为 请求起始行 request line
 		$requestStartLine = $rawDataArr[ 0 ];
 		unset( $rawDataArr[ 0 ] );
 		list( $requestMethod, $requestUri, $httpVersion ) = explode( ' ', $requestStartLine );
@@ -35,14 +32,14 @@ class Http{
 		if( false !== strpos( $requestUri, '?' ) ){
 			list( $pathInfo, $queryString ) = explode( '?', $requestUri );
 		} else {
-		  $pathInfo = $pathInfo;	
+		  $pathInfo = '';
 		  $queryString = '';
 		}
 		$server['PATH_INFO'] = trim( $pathInfo );
 		$server['QUERY_STRING'] = trim( $queryString );
 		$server['HTTP_VERSION'] = trim( $httpVersion );
 
-		// 首部，也就是header
+		// 首部，也就是http header
 		foreach( $rawDataArr as $item ){
 			//if( '' != trim( $item ) ){
 			if( false !== strpos( $item, ':' ) ){
@@ -68,8 +65,10 @@ class Http{
 
 		// 在POST方法下，收集body信息，但是不能忽略queryString
 		if( 'POST' === $requestMethod ){
+			//print_r( $header );
 		  // 主体
 	  	$requestBody = array_pop( $rawDataArr );
+			echo $requestBody.PHP_EOL;
 		}
       
 	  $request = new Request();	

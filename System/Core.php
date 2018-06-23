@@ -23,6 +23,7 @@ abstract class Core{
     'reactor_num' => 1,
     'worker_num' => 4,
     'task_worker_num' => 0,
+    'daemon' => false,
   );
 
   public static $protocol = '';
@@ -46,6 +47,8 @@ abstract class Core{
     self::$eventLoop = Factory::create(); 
 
     //self::$eventEmitter = new eventEmitter();
+		//global $argv;
+		//print_r( $argv );
 
   }
 
@@ -111,6 +114,7 @@ abstract class Core{
   }
 
   public function start(){
+		self::parseCommand();
     //self::daemonize();
     self::createListenSocket();
     self::forkReactorProcess(); 
@@ -119,6 +123,52 @@ abstract class Core{
       sleep( 1 );
     }
   }
+
+	/*
+	 * @desc : parse the command line arguments
+	 */
+	private static function parseCommand(){
+		
+    global $argv;
+		if( count( $argv ) <= 1 ){
+      self::useageUi();
+			exit;
+		}
+    // argv结构是0=>index.php 1=>start 
+		switch( $argv[ 1 ] ){
+		  case 'start':
+				if( isset( $argv[ 2 ] ) && '-d' == $argv[ 2 ] ){
+					self::$setting['daemon'] = true;   
+				}
+				break;
+		  case 'reload':
+				break;
+		  case 'stop':
+				break;
+			default:
+				self::useageUi();
+	  		exit;
+				break;
+		}
+
+	}
+
+	private static function useageUi(){
+    echo PHP_EOL.PHP_EOL.PHP_EOL;
+    echo "--------------------------------------------------------------".PHP_EOL;
+    echo "|            ||    ||      /\        ||          ||          |".PHP_EOL;
+    echo "|             ||  ||      /  \        ||        ||           |".PHP_EOL;
+    echo "|               ||       /====\        |   ||   |            |".PHP_EOL;
+    echo "|               ||      /      \       |  |  |  |            |".PHP_EOL;
+    echo "|               ||     /        \       ||    ||             |".PHP_EOL;
+    echo "--------------------------------------------------------------".PHP_EOL;
+    echo 'USAGE: php index.php commond'.PHP_EOL;
+    echo '1. start,以debug模式开启服务，此时服务不会以daemon形式运行'.PHP_EOL;
+    echo '2. start -d,以daemon模式开启服务'.PHP_EOL;
+    echo '3. status,查看服务器的状态'.PHP_EOL;
+    echo '4. stop,停止服务器'.PHP_EOL;
+    echo '5. reload,热加载所有业务代码'.PHP_EOL.PHP_EOL.PHP_EOL.PHP_EOL;		
+	}
 
   /*
    * @desc : 创建监听socket
