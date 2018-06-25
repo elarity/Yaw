@@ -114,6 +114,7 @@ abstract class Core{
   }
 
   public function start(){
+		self::displayUi();
 		self::parseCommand();
     //self::daemonize();
     self::createListenSocket();
@@ -151,6 +152,17 @@ abstract class Core{
 				break;
 		}
 
+	}
+
+	private static function displayUi(){
+    echo PHP_EOL.PHP_EOL.PHP_EOL;
+    echo "--------------------------------------------------------------".PHP_EOL;
+    echo "|            ||    ||      /\        ||          ||          |".PHP_EOL;
+    echo "|             ||  ||      /  \        ||        ||           |".PHP_EOL;
+    echo "|               ||       /====\        |   ||   |            |".PHP_EOL;
+    echo "|               ||      /      \       |  |  |  |            |".PHP_EOL;
+    echo "|               ||     /        \       ||    ||             |".PHP_EOL;
+    echo "--------------------------------------------------------------".PHP_EOL;
 	}
 
 	private static function useageUi(){

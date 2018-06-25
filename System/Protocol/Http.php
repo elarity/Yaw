@@ -13,18 +13,23 @@ class Http{
 		$rawContent = '';
 
 		// 将原始数据使用 PHP_EOL 分割,目前我还不知道使用PHP_EOL会不会有什么问题
+		// 所以，还得再分才行，在用"\r\n"将 请求行 和 请求头 分开
 		/*
-			0 => request-line
+			0 => request-line\r\n
 			     request-header
-
       1 => request-body
 		 */
 		$rawDataArr = explode( "\r\n\r\n", $rawData, 2 );
 
+		// 取出请求体
+		$rawRequestBody = trim( $rawDataArr[ 1 ] );
+		
+		// 取出 请求行 和 请求头
+    $requestHeader = explode( "\r\n", $rawDataArr[ 0 ] );
+	  $requestStartLine = $requestHeader[ 0 ]; 	
+		unset( $requestHeader[ 0 ] );
 
 		// 请求行,或者 我个人称为 请求起始行 request line
-		$requestStartLine = $rawDataArr[ 0 ];
-		unset( $rawDataArr[ 0 ] );
 		list( $requestMethod, $requestUri, $httpVersion ) = explode( ' ', $requestStartLine );
 		// 初始化到系统常量中
 		$server['METHOD'] = trim( $requestMethod );
@@ -38,13 +43,27 @@ class Http{
 		$server['PATH_INFO'] = trim( $pathInfo );
 		$server['QUERY_STRING'] = trim( $queryString );
 		$server['HTTP_VERSION'] = trim( $httpVersion );
-
+    
 		// 首部，也就是http header
-		foreach( $rawDataArr as $item ){
-			//if( '' != trim( $item ) ){
+		foreach( $requestHeader as $item ){
 			if( false !== strpos( $item, ':' ) ){
 				list( $key, $value ) = explode( ':', $item );
-				$header[ strtoupper( trim( $key ) ) ] = trim( $value );
+				$key = strtoupper( $key );
+				switch( $key ){
+				  case 'CONTENT-TYPE':
+						if( !preg_match( '/boundary="?(\S+)"?/', $value, $match ) ){
+						  $header[ $key ] = trim( $value );
+						} else {
+							//print_r( $match );
+						  $header[ $key ] = 'multipart/form-data';
+							$boundary = '--'.trim( $match[ 1 ] );
+							//echo $boundary.PHP_EOL;
+						}
+					  break;
+					default:
+				    $header[ strtoupper( trim( $key ) ) ] = trim( $value );
+					  break;
+				}
 			}
 		}
 
@@ -65,10 +84,23 @@ class Http{
 
 		// 在POST方法下，收集body信息，但是不能忽略queryString
 		if( 'POST' === $requestMethod ){
-			//print_r( $header );
-		  // 主体
-	  	$requestBody = array_pop( $rawDataArr );
-			echo $requestBody.PHP_EOL;
+			// 判断 content-type 
+			if( 'application/x-www-form-urlencoded' == $header['CONTENT-TYPE'] ){
+				// 数据样式案例： user=etc&password=12345
+				if( '' != $rawRequestBody ){
+				  $postKv = explode( '&', $rawRequestBody );
+				  foreach( $postKv as $_item ){
+						list( $postKey, $postValue ) = explode( '=', $_item );
+						$post[ trim( $postKey ) ] = trim( $postValue );
+				  }	
+				}
+			}else if( 'multipart/form-data' == $header['CONTENT-TYPE'] ){
+				// form-data 中的数据是这样的
+				//print_r( explode( $boundary, $rawRequestBody ) );
+
+
+
+			}
 		}
       
 	  $request = new Request();	
@@ -76,7 +108,8 @@ class Http{
 		$request->header = $header;
 		$request->get = $get;
 		$request->post = $post;
-		$request->rawContent = $rawContent;
+		$request->rawContent = $rawRequestBody;
+		//print_r( $request );
 
     return $request;
 

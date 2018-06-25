@@ -34,7 +34,7 @@ class Tcp{
     $protocolParser = new $protocolClass;
 
 		// 接受到的数据内容
-    $rawData = socket_read( $connectSocket, 2048 ); 
+    $rawData = socket_read( $connectSocket, 10000000 ); 
 		$request = $protocolParser->decode( $rawData );
 
 		// 返回数据
