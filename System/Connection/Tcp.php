@@ -2,6 +2,7 @@
 namespace System\Connection;
 use System\Component\EventEmitter; 
 use System\Connection\Request;
+use System\Protocol\Http as Http;
 
 class Tcp{
 
@@ -29,16 +30,16 @@ class Tcp{
   public function receive( $connectSocket ){
 
 		// 查看是哪种协议 然后初始化协议解析器
-    $protocol = ucfirst( $this->protocol );
-    $protocolClass = "System\\Protocol\\".$protocol;
-    $protocolParser = new $protocolClass;
+    //$protocol = ucfirst( $this->protocol );
+    //$protocolClass = "System\\Protocol\\".$protocol;
+    //$protocolParser = new $protocolClass;
 
 		// 接受到的数据内容
     $rawData = socket_read( $connectSocket, 10000000 ); 
-		$request = $protocolParser->decode( $rawData );
+		$request = Http::decode( $rawData );
 
 		// 返回数据
-		$msg = $protocolParser->encode();
+		//$msg = $protocolParser->encode();
 		//$rs = socket_write( $connectSocket, $msg, strlen( $msg ) );
 		//socket_close( $connectSocket );
 

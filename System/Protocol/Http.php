@@ -4,12 +4,22 @@ use System\Connection\Request;
 
 class Http{
 
-  public function decode( $rawData ){
+	private static $method = array(
+		'GET', 'POST'
+	);
+
+	/*
+	 * @desc : 解析收到的http数据 目前只支持post 和 get两个方法
+	 */
+  public static function decode( $rawData ){
+
+	  $request = new Request();	
 
 		$server = [];
 		$header = [];
 		$get = [];
 		$post = [];
+		$files = [];
 		$rawContent = '';
 
 		// 将原始数据使用 PHP_EOL 分割,目前我还不知道使用PHP_EOL会不会有什么问题
@@ -31,6 +41,9 @@ class Http{
 
 		// 请求行,或者 我个人称为 请求起始行 request line
 		list( $requestMethod, $requestUri, $httpVersion ) = explode( ' ', $requestStartLine );
+		if( !in_array( $requestMethod, self::$method ) ){
+      return $request;
+		}
 		// 初始化到系统常量中
 		$server['METHOD'] = trim( $requestMethod );
     // 在get方法中，可能存在如下方式 http://www.x.com/api?username=pangzi
@@ -95,42 +108,99 @@ class Http{
 				  }	
 				}
 			}else if( 'multipart/form-data' == $header['CONTENT-TYPE'] ){
+
 				// form-data 中的数据是这样的
 				//print_r( explode( $boundary, $rawRequestBody ) );
-
-
+				$rawFormData = explode( $boundary, $rawRequestBody );
+				if( '' == $rawFormData[ 0 ] ){
+          unset( $rawFormData[ 0 ] );
+				}
+				foreach( $rawFormData as $rawFormDataItem ){
+					$rawFormDataItem = trim( $rawFormDataItem );
+					// rawFormDataItem 数据实例
+					// 文件类型
+					// Content-Disposition: form-data; name="testfile"; filename="111111111111111111.png"
+          // Content-Type: image/png
+          //
+					// �PNG
+					// !����4���VA��|��};pJ�&\�nome-ׄk�5��pM�&\��>GIׄk�5��pM�&\���O q��IEND�B`�
+          // 普通类型
+					// Content-Disposition: form-data; name="username"
+          //
+					// elarity
+					// 如果是文件上传数据
+					if( false !== strpos( $rawFormDataItem, "filename" ) ){
+					  $rawFormDataArr = explode( "\r\n", $rawFormDataItem );
+						$fileKey = '';
+						foreach( $rawFormDataArr as $__key => $__item ){
+						  if( '' !== trim( $__item ) ){
+								if( preg_match('/name="(.*?)"; filename="(.*?)"$/', $__item, $match ) ){
+									$fileKey = $match[ 1 ];
+									$files[ $fileKey ]['name'] = $match[ 2 ];
+								} else if( false !== strpos( strtolower( $__item ), "content-type" ) ) {
+									list( $contentTypeKey, $contentTypeValue ) = explode( ":", $__item );
+									$files[ $fileKey ]['type'] = trim( $contentTypeValue );
+								} else {
+                  $files[ $fileKey ]['data'] = empty( $files[ $fileKey ]['data'] ) ? '' : $files[ $fileKey ]['data'] ;
+									$files[ $fileKey ]['data'] .= $__item;
+								}
+					  	}
+						}
+					} 
+					// 如果是表单数据
+					else{
+					  $rawFormDataArr = explode( "\r\n", $rawFormDataItem );
+						if( 3 === count( $rawFormDataArr ) ){
+						  preg_match( '/name="(.*?)"/', $rawFormDataArr[ 0 ], $match );
+							$post[ $match[ 1 ] ] = $rawFormDataArr[ 2 ];
+						}
+					}
+			  } 
 
 			}
 		}
-      
-	  $request = new Request();	
+
+		//print_r( $post );
+		//print_r( $files );
+		//echo PHP_EOL.PHP_EOL.PHP_EOL;
+
 		$request->server = $server;
 		$request->header = $header;
 		$request->get = $get;
 		$request->post = $post;
+		$request->files = $files;
 		$request->rawContent = $rawRequestBody;
-		//print_r( $request );
 
     return $request;
 
   }
 
-  public function encode(){
 
-		 $responseStartLine = "HTTP/1.1 200 OK".PHP_EOL;
+  /*
+	 * @desc : 编码http数据 并返回
+	 */
+  public static function encode( $data ){
+
+		$responseStartLine = "HTTP/1.1 200 OK\r\n";
 	  
-		 $body = json_encode( array( 'username' => 'elarity' ) );
+		$body = json_encode( array( 'username' => 'elarity' ) );
 
-     $header = "";
-		 $header = $header."Content-Type: text/html".PHP_EOL;
-		 $header = $header."Content-Length: ".strlen( $body ).PHP_EOL;
-     $header = $header.PHP_EOL;
-
-		 $content = $responseStartLine.$header.$body;
-
-		 return $content;
+    $header = "";
+		$header = $header."Server: Yaw Http Server"."\r\n";
+		$header = $header."Content-Type: text/html\r\n";
+		$header = $header."Content-Length: ".strlen( $body )."\r\n";
+		$header = $header."Date: ".date("Y-m-d H:i:s")."\r\n";
+    $header = $header."\r\n";
+     
+		$content = $responseStartLine.$header.$body;
+		return $content;
 
   }  
 
+	/*
+	 * @desc : 设置header头部
+	 */
+	public static function setHeader( array $headerArr ){
+	}
 
 }

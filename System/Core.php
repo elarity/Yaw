@@ -20,9 +20,8 @@ abstract class Core{
    * @desc : 默认配置选项
    */
   protected static $setting = array(
-    'reactor_num' => 1,
-    'worker_num' => 4,
-    'task_worker_num' => 0,
+    'reactorNum' => 4,
+    'workerNum' => 1,
     'daemon' => false,
   );
 
@@ -90,31 +89,67 @@ abstract class Core{
 
   /**/
   private static function forkReactorProcess(){
+    // 创建消息队列
+		$msgQueueKey = ftok( ROOT, 'a' );
+		$msgQueue = msg_get_queue( $msgQueueKey, 0666 );
+
     // master进程 
     cli_set_process_title( 'Yaw Master Process' );
     //echo 'master : '.posix_getpid().PHP_EOL;
+		// 将master进程pid写入到pid文件中
+	  file_put_contents( ROOT."Run".DS."master.pid", posix_getpid() );	
     //reactor进程，由master进程fork出来
-    for( $i = 1; $i <= self::$setting['reactor_num']; $i++ ){
+    for( $i = 1; $i <= self::$setting['reactorNum']; $i++ ){
       $pid = pcntl_fork();
       if( $pid == 0 ){
- 	  
         cli_set_process_title( 'Yaw Reactor Process' );
         $listenSocket = self::$listenSocket; 
         $eventLoop = self::$eventLoop;
-		
         //每个reactor进程都进入 事件循环
         $eventLoop->add( $listenSocket, \Event::READ, array( '\System\Core', 'acceptTcpConnect' ) );
  	      $eventLoop->loop();
-   	   	
-      }else if( 0 > $pid ){
+			}
+			else if( $pid > 0 ){
+				$reactorPidArr[] = $pid;
+			}
+			else if( $pid < 0 ){
         throw new \Exception( 'pcntl_fork error.'.PHP_EOL );
       }
     }
+		// 将reactor进程的pid写入到pid文件
+	  file_put_contents( ROOT."Run".DS."reactor.pid", json_encode( $reactorPidArr ) );	
+
+
     //worker进程 由master进程fork出来
+    for( $i = 1; $i <= self::$setting['workerNum']; $i++ ){
+      $pid = pcntl_fork();
+      if( $pid == 0 ){
+        cli_set_process_title( 'Yaw Worker Process' );
+				// 使worker进程进入无限循环中，阻塞在消息队列读取上
+				while( true ){
+					//sleep( 1 );
+				  //msg_receive( $msgQueue, 0, $msgtype, 8192, $message, false, MSG_IPC_NOWAIT );	
+				  msg_receive( $msgQueue, 0, $msgtype, 8192, $message );	
+					echo $message.PHP_EOL;
+					//msg_remove_queue( $msgQueue );
+				}
+			}
+			else if( $pid > 0 ){
+				//echo posix_getpid().PHP_EOL;
+				// 依然是master进程内
+				$workerPidArr[] = $pid;
+			}
+			else if( $pid < 0 ){
+        throw new \Exception( 'pcntl_fork error.'.PHP_EOL );
+      }
+		}
+		// 将worker进程的pid写入到pid文件
+	  file_put_contents( ROOT."Run".DS."worker.pid", json_encode( $workerPidArr ) );	
+
   }
 
   public function start(){
-		self::displayUi();
+		//self::displayUi();
 		self::parseCommand();
     //self::daemonize();
     self::createListenSocket();
@@ -138,6 +173,7 @@ abstract class Core{
     // argv结构是0=>index.php 1=>start 
 		switch( $argv[ 1 ] ){
 		  case 'start':
+				self::displayUi();
 				if( isset( $argv[ 2 ] ) && '-d' == $argv[ 2 ] ){
 					self::$setting['daemon'] = true;   
 				}
@@ -157,22 +193,30 @@ abstract class Core{
 	private static function displayUi(){
     echo PHP_EOL.PHP_EOL.PHP_EOL;
     echo "--------------------------------------------------------------".PHP_EOL;
+		echo "|                                                            |".PHP_EOL;
+		echo "|                                                            |".PHP_EOL;
     echo "|            ||    ||      /\        ||          ||          |".PHP_EOL;
     echo "|             ||  ||      /  \        ||        ||           |".PHP_EOL;
     echo "|               ||       /====\        |   ||   |            |".PHP_EOL;
     echo "|               ||      /      \       |  |  |  |            |".PHP_EOL;
     echo "|               ||     /        \       ||    ||             |".PHP_EOL;
+		echo "|                                                            |".PHP_EOL;
+		echo "|                                                            |".PHP_EOL;
     echo "--------------------------------------------------------------".PHP_EOL;
 	}
 
 	private static function useageUi(){
     echo PHP_EOL.PHP_EOL.PHP_EOL;
     echo "--------------------------------------------------------------".PHP_EOL;
+		echo "|                                                            |".PHP_EOL;
+		echo "|                                                            |".PHP_EOL;
     echo "|            ||    ||      /\        ||          ||          |".PHP_EOL;
     echo "|             ||  ||      /  \        ||        ||           |".PHP_EOL;
     echo "|               ||       /====\        |   ||   |            |".PHP_EOL;
     echo "|               ||      /      \       |  |  |  |            |".PHP_EOL;
     echo "|               ||     /        \       ||    ||             |".PHP_EOL;
+		echo "|                                                            |".PHP_EOL;
+		echo "|                                                            |".PHP_EOL;
     echo "--------------------------------------------------------------".PHP_EOL;
     echo 'USAGE: php index.php commond'.PHP_EOL;
     echo '1. start,以debug模式开启服务，此时服务不会以daemon形式运行'.PHP_EOL;
@@ -205,7 +249,12 @@ abstract class Core{
       //$eventEmitter = self::$eventEmitter;
       //$eventEmitter->on( 'request', function(){} );
 			//echo intval( $connectSocket ).PHP_EOL;
-  
+
+      // 创建消息队列
+		  $msgQueueKey = ftok( ROOT, 'a' );
+		  $msgQueue = msg_get_queue( $msgQueueKey, 0666 );
+			$rs=msg_send( $msgQueue, 1, json_encode( [ 'pass' => time(), ] ) );
+
       $tcp = new Tcp( $connectSocket );
 
 		  //$msg = 'msg';
