@@ -1,8 +1,11 @@
 <?php
 namespace System;
-use System\Component\EventEmitter;
 use System\Event\Factory;
 use System\Connection\Tcp;
+use System\Component\EventEmitter; 
+use System\Connection\Request;
+use System\Connection\Response;
+use System\Protocol\Http as Http;
 
 abstract class Core{
 
@@ -21,7 +24,7 @@ abstract class Core{
    */
   protected static $setting = array(
     'reactorNum' => 4,
-    'workerNum' => 1,
+    'workerNum' => 16,
     'daemon' => false,
   );
 
@@ -33,6 +36,8 @@ abstract class Core{
    *
    */
   //protected static $eventEmitter = null;
+
+	public static $msgQueue = null;
 
   /*
    * @desc : 初始化core
@@ -48,6 +53,9 @@ abstract class Core{
     //self::$eventEmitter = new eventEmitter();
 		//global $argv;
 		//print_r( $argv );
+    // 创建消息队列
+		$msgQueueKey = ftok( ROOT, 'a' );
+		self::$msgQueue = msg_get_queue( $msgQueueKey, 0666 );
 
   }
 
@@ -89,9 +97,6 @@ abstract class Core{
 
   /**/
   private static function forkReactorProcess(){
-    // 创建消息队列
-		$msgQueueKey = ftok( ROOT, 'a' );
-		$msgQueue = msg_get_queue( $msgQueueKey, 0666 );
 
     // master进程 
     cli_set_process_title( 'Yaw Master Process' );
@@ -127,12 +132,25 @@ abstract class Core{
         cli_set_process_title( 'Yaw Worker Process' );
 				// 使worker进程进入无限循环中，阻塞在消息队列读取上
 				while( true ){
-					//sleep( 1 );
-				  //msg_receive( $msgQueue, 0, $msgtype, 8192, $message, false, MSG_IPC_NOWAIT );	
-				  msg_receive( $msgQueue, 0, $msgtype, 8192, $message );	
-					echo $message.PHP_EOL;
+				  msg_receive( self::$msgQueue, 0, $msgtype, 8192, $message );	
+
+					// 删除消息队列 别手贱
 					//msg_remove_queue( $msgQueue );
+
+					if( self::$protocal == 'http' ){
+					  $request = Http::decode( $rawData );
+				   	$response = new Response( $connectSocket );
+				  	// 执行回调函数
+			  		$cb = EventEmitter::on( 'request', function(){} );
+			  		call_user_func_array( $cb, array( $request, $response ) );	
+			  		// 获取IO多路复用器 比如event select
+		   			// 将fd从数组中删除掉
+			  		$eventLoop = \System\Core::$eventLoop;
+			  		$eventLoop->del( $connectSocket, \Event::READ );
+					}
+
 				}
+
 			}
 			else if( $pid > 0 ){
 				//echo posix_getpid().PHP_EOL;
@@ -251,9 +269,7 @@ abstract class Core{
 			//echo intval( $connectSocket ).PHP_EOL;
 
       // 创建消息队列
-		  $msgQueueKey = ftok( ROOT, 'a' );
-		  $msgQueue = msg_get_queue( $msgQueueKey, 0666 );
-			$rs=msg_send( $msgQueue, 1, json_encode( [ 'pass' => time(), ] ) );
+			//$rs = msg_send( self::$msgQueue, 1, json_encode( [ 'pass' => time(), ] ) );
 
       $tcp = new Tcp( $connectSocket );
 

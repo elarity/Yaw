@@ -1,5 +1,4 @@
 <?php
-
 /*
  * 检查必须的基础运行环境
  */
@@ -13,9 +12,11 @@ function checkEnv(){
 	if( !extension_loaded('sysvmsg') ){
 		throw new Exception('缺少sysvmsg扩展');
 	}
+	if( !extension_loaded('event') ){
+		throw new Exception('缺少event扩展');
+	}
 }
 checkEnv();
-
 
 define( 'DS', DIRECTORY_SEPARATOR );
 define( 'ROOT', __DIR__.DS );
@@ -28,7 +29,6 @@ function autoload( $className ){
 }
 spl_autoload_register( 'autoload' );
 
-
 // 启动一个http服务器
 $server = new System\Http( '0.0.0.0', 9998 );
 $server->set( array(
@@ -36,8 +36,7 @@ $server->set( array(
 
 $server->on( 'request', function( $request, $response ){
 
-	//print_r( $request );
-	//print_r( $response );
+	//print_r( $request->get );
   $response->end('hello world'.PHP_EOL);
 
 } );
