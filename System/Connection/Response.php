@@ -13,12 +13,9 @@ class Response{
 
 	/**/
 	public function end( $content ){
-		
     $content = Http::encode( $content );
-
 		socket_write( $this->connectSocket, $content, strlen( $content ) );
 		socket_close( $this->connectSocket );
-
 	}
 
 }

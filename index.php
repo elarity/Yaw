@@ -30,15 +30,12 @@ function autoload( $className ){
 spl_autoload_register( 'autoload' );
 
 // 启动一个http服务器
-$server = new System\Http( '0.0.0.0', 9998 );
+$server = new System\Http( '0.0.0.0', 6666 );
 $server->set( array(
 ) );
 
-$server->on( 'request', function( $request, $response ){
-
-	//print_r( $request->get );
+$server->on( 'request', function( $request, $response ) {
   $response->end('hello world'.PHP_EOL);
-
 } );
 $server->start();
 
