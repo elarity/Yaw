@@ -3,13 +3,13 @@ define( "DS", DIRECTORY_SEPARATOR );
 define( "ROOT", __DIR__ );
 
 spl_autoload_register( function( $s_class_name ) {
-  $s_path = str_replace( "\\", "/", $s_class_name );
-  $s_file = ROOT.DS.$s_path.'.php';
-  require_once $s_file;
+    $s_path = str_replace( "\\", "/", $s_class_name );
+    $s_file = ROOT.DS.$s_path.'.php';
+    require_once $s_file;
 } );
 
 $o_core = new Yaw\Core();
 $o_core->onReload = function() {
-  echo "on-reload".PHP_EOL;
+    echo "on-reload".PHP_EOL;
 };
 Yaw\Core::start();
