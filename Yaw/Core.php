@@ -1,6 +1,8 @@
 <?php
 namespace Yaw;
 use Yaw\Event\Libevent as Libevent;
+use Yaw\Event\Select;
+use Yaw\Connection\Tcp;
 
 class Core {
 
@@ -44,12 +46,12 @@ class Core {
     /*
      * @desc : listen_socket
      * */
-    private static $i_listen_socket = null;
+    public static $i_listen_socket = null;
 
     /*
      * @desc : event-loop
      * */
-    private static $o_event_loop = null;
+    public static $o_event_loop = null;
 
     /*
      * @desc : 当前实例的worker子进程map
@@ -167,14 +169,11 @@ class Core {
         $i_listen_socket = socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
         socket_set_option( $i_listen_socket, SOL_SOCKET, SO_REUSEPORT, 1 );
         socket_set_option( $i_listen_socket, SOL_SOCKET, SO_REUSEADDR, 1 );
-        //socket_set_option( $i_listen_socket, SOL_SOCKET, TCP_NODELAY, 1 );
+        socket_set_option( $i_listen_socket, SOL_TCP, TCP_NODELAY, 1 );
         socket_set_nonblock( $i_listen_socket );
         socket_bind( $i_listen_socket, $i_host, $i_port );
         socket_listen( $i_listen_socket );
         self::$i_listen_socket = $i_listen_socket;
-        // 其次创建event-loop对象
-        $o_event_loop       = new Libevent();
-        self::$o_event_loop = $o_event_loop;
     }
 
     /*
@@ -193,16 +192,15 @@ class Core {
                     exit( "fork err".PHP_EOL );
                 } else if ( 0 == $i_pid ) {
                     cli_set_process_title( "Yaw Worker Process" );
-                    /*
-                    while ( true ) {
-                      sleep( 1 );
-                    }
-                    */
+                    // 其次创建event-loop对象
+                    $o_event_loop       = new Libevent();
+                    $o_event_loop->test = posix_getpid();
+                    self::$o_event_loop = $o_event_loop;
                     // 每个子进程陷入事件循环
                     // 实际上每个子进程会自动继承父进程中创建的listen_socket
-                    self::$o_event_loop->add( self::$i_listen_socket, 1 );
+                    $f_callback = "\Yaw\Core::acceptConnect";
+                    self::$o_event_loop->add( self::$i_listen_socket, Libevent::EV_READ, $f_callback );
                     self::$o_event_loop->loop();
-
                 } else if ( 0 < $i_pid  ) {
                     // a_worker_pid
                     self::$a_worker_pid[ $i_pid ] = $i_pid;
@@ -217,6 +215,18 @@ class Core {
         file_put_contents( self::$a_config['master_pid_file'], posix_getpid() );
         file_put_contents( self::$a_config['worker_pid_file'], json_encode( self::$a_worker_pid ) );
         cli_set_process_title( "Yaw Master Process" );
+    }
+
+    /*
+     * @desc : accept系统调用
+     * */
+    public static function acceptConnect() {
+        $o_tcp_conn = new Tcp();
+        $o_tcp_conn->accept();
+        //$r_client_socket = socket_accept( self::$i_listen_socket );
+        //$ret = socket_recv( $r_client_socket, $recv_content, 2048, 0 );
+        //echo $recv_content;
+        //sleep(1);
     }
 
     /*
