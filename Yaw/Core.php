@@ -1,5 +1,6 @@
 <?php
 namespace Yaw;
+use Yaw\Event\EventInterface;
 use Yaw\Event\Libevent as Libevent;
 use Yaw\Event\Select;
 use Yaw\Connection\Tcp;
@@ -193,13 +194,14 @@ class Core {
                 } else if ( 0 == $i_pid ) {
                     cli_set_process_title( "Yaw Worker Process" );
                     // 其次创建event-loop对象
-                    $o_event_loop       = new Libevent();
+                    //$o_event_loop       = new Libevent();
+                    $o_event_loop       = new Select();
                     $o_event_loop->test = posix_getpid();
                     self::$o_event_loop = $o_event_loop;
                     // 每个子进程陷入事件循环
                     // 实际上每个子进程会自动继承父进程中创建的listen_socket
-                    $f_callback = "\Yaw\Core::acceptConnect";
-                    self::$o_event_loop->add( self::$i_listen_socket, Libevent::EV_READ, $f_callback );
+                    $f_callback = "\Yaw\Core::accept_connect";
+                    self::$o_event_loop->add( self::$i_listen_socket, EventInterface::EV_READ, $f_callback );
                     self::$o_event_loop->loop();
                 } else if ( 0 < $i_pid  ) {
                     // a_worker_pid
@@ -220,9 +222,10 @@ class Core {
     /*
      * @desc : accept系统调用
      * */
-    public static function acceptConnect() {
+    public static function accept_connect() {
         $o_tcp_conn = new Tcp();
         $o_tcp_conn->accept();
+        echo "Core::accept_connect".PHP_EOL;
         //$r_client_socket = socket_accept( self::$i_listen_socket );
         //$ret = socket_recv( $r_client_socket, $recv_content, 2048, 0 );
         //echo $recv_content;

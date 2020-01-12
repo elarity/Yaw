@@ -2,6 +2,7 @@
 namespace Yaw\Connection;
 use Yaw\Core;
 use Yaw\Protocol\Http;
+use Yaw\Event\EventInterface;
 use Yaw\Event\Libevent;
 use Yaw\Event\Select;
 
@@ -17,12 +18,12 @@ class Tcp {
         // accept链接
         $r_connection_socket = socket_accept( Core::$i_listen_socket );
         //echo posix_getpid()." | ".strval( $r_connection_socket ).PHP_EOL;
-        echo Core::$o_event_loop->test.'|'.strval( $r_connection_socket ).PHP_EOL;
+        //echo Core::$o_event_loop->test.'|'.strval( $r_connection_socket ).PHP_EOL;
         if ( !$r_connection_socket ) {
             return;
         }
         $this->r_connection_socket = $r_connection_socket;
-        Core::$o_event_loop->add( $this->r_connection_socket, Libevent::EV_READ, array( $this, "read" ) );
+        Core::$o_event_loop->add( $this->r_connection_socket, EventInterface::EV_READ, array( $this, "read" ) );
     }
 
     /*
@@ -31,9 +32,9 @@ class Tcp {
     public function read() {
         // 读取数据
         socket_recv( $this->r_connection_socket, $s_recv_content, 2048, 0 );
-        //echo "收到：{$s_recv_content}";
+        echo "收到：{$s_recv_content}";
         // 设置ev_write
-        Core::$o_event_loop->add( $this->r_connection_socket, Libevent::EV_WRITE, array( $this, "write" ) );
+        Core::$o_event_loop->add( $this->r_connection_socket, EventInterface::EV_WRITE, array( $this, "write" ) );
         //print_r( Core::$o_event_loop->a_event );
     }
 
@@ -46,6 +47,7 @@ class Tcp {
             'pid' => Core::$o_event_loop->test,
         ) );
         socket_write( $this->r_connection_socket, $ret, strlen( $ret ) );
+        Core::$o_event_loop->del( $this->r_connection_socket, EventInterface::EV_ALL );
         //sleep(1);
         //socket_write( $this->r_connection_socket, "hi", strlen( "hi" ) );
         //echo json_encode( Core::$o_event_loop->a_event ).PHP_EOL;

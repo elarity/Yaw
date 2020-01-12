@@ -5,10 +5,8 @@ use \EventConfig as EventConfig;
 use \EventBase   as EventBase;
 use \Event       as Event;
 
-class Libevent {
+class Libevent implements EventInterface {
 
-    const EV_READ  = 1;
-    const EV_WRITE = 2;
     public $o_event_config = null;
     public $o_event_base   = null;
 
@@ -43,7 +41,7 @@ class Libevent {
     /*
      * @desc : 删除一个事件
      * */
-    public function del() {
+    public function del( $r_fd, $i_event_type ) {
     }
 
     /*
