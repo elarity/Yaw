@@ -10,8 +10,10 @@ class Core {
     const STATUS_RELOAD  = 'reload';
     const STATUS_RUNNING = 'running';
 
-    public $onReload = null;
-    public $onStart  = null;
+    public $onStart   = null;
+    public $onReload  = null;
+    public $onConnect = null;
+    public $onMessage = null;
 
     /*
      * Yaw配置
@@ -42,7 +44,8 @@ class Core {
     /*
      * @desc : map
      */
-    private static $a_instance_map = array();
+    public static $a_instance_map = array();
+    public static $o_instance     = null;
 
     /*
      * @desc : listen_socket
@@ -62,6 +65,7 @@ class Core {
     public function __construct() {
         $s_object_hash_id = spl_object_hash( $this );
         self::$a_instance_map[ $s_object_hash_id ] = $this;
+        self::$o_instance                          = $this;
         self::$a_worker_map[ $s_object_hash_id ]   = array();
     }
 
@@ -225,7 +229,7 @@ class Core {
     public static function accept_connect() {
         $o_tcp_conn = new Tcp();
         $o_tcp_conn->accept();
-        echo "Core::accept_connect".PHP_EOL;
+        //echo "Core::accept_connect".PHP_EOL;
         //$r_client_socket = socket_accept( self::$i_listen_socket );
         //$ret = socket_recv( $r_client_socket, $recv_content, 2048, 0 );
         //echo $recv_content;

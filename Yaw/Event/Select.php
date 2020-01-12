@@ -62,10 +62,10 @@ class Select implements EventInterface {
      * */
     public function loop() {
         while ( true ) {
-            sleep( 1 );
+            //sleep( 1 );
             $this->a_read = $this->a_client;
             $i_loop_ret = socket_select( $this->a_read, $this->a_write, $this->a_exception, NULL );
-            print_r( $this->a_write );
+            //print_r( $this->a_write );
             if ( $i_loop_ret <= 0 ) {
                 continue;
             }

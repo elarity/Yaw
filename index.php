@@ -10,6 +10,11 @@ spl_autoload_register( function( $s_class_name ) {
 
 $o_core = new Yaw\Core();
 $o_core->onReload = function() {
-    echo "on-reload".PHP_EOL;
+    //echo "on-reload".PHP_EOL;
 };
+$o_core->onMessage = function( $r_connection, $m_data ) {
+    //echo "on-message".PHP_EOL;
+    print_r( $m_data );
+};
+
 Yaw\Core::start();
