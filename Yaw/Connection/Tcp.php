@@ -50,13 +50,21 @@ class Tcp {
         $ret = Http::encode( array(
             'pid' => Core::$o_event_loop->test,
         ) );
-        socket_write( $this->r_connection_socket, $ret, strlen( $ret ) );
-        Core::$o_event_loop->del( $this->r_connection_socket, EventInterface::EV_ALL );
+        //echo "trigger write cb".PHP_EOL;
+        //socket_write( $this->r_connection_socket, $ret, strlen( $ret ) );
+        //Core::$o_event_loop->del( $this->r_connection_socket, EventInterface::EV_ALL );
         //sleep(1);
         //socket_write( $this->r_connection_socket, "hi", strlen( "hi" ) );
         //echo json_encode( Core::$o_event_loop->a_event ).PHP_EOL;
         //unset( Core::$o_event_loop->a_event[ intval( $this->r_connection_socket ) ] );
         //socket_close( $this->r_connection_socket );
+    }
+
+    /*
+     * @desc : 向客户端发送数据
+     * */
+    public function send( $s_send_content ) {
+
     }
 
 }

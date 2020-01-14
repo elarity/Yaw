@@ -42,6 +42,37 @@ class Libevent implements EventInterface {
      * @desc : 删除一个事件
      * */
     public function del( $r_fd, $i_event_type ) {
+        $i_fd = intval( $r_fd );
+        // 删除所有事件类型
+        if ( self::EV_ALL === $i_event_type ) {
+            if ( isset( $this->a_event[ $i_fd ] ) ) {
+                if ( isset( $this->a_event[ $i_fd ][ self::EV_WRITE ] ) ) {
+                    $o_event = $this->a_event[ $i_fd ][ self::EV_WRITE ];
+                    $o_event->free();
+                    unset( $this->a_event[ $i_fd ][ self::EV_WRITE ] );
+                }
+                if ( isset( $this->a_event[ $i_fd ][ self::EV_READ ] ) ) {
+                    $o_event = $this->a_event[ $i_fd ][ self::EV_READ ];
+                    $o_event->free();
+                    unset( $this->a_event[ $i_fd ][ self::EV_READ ] );
+                }
+                if ( isset( $this->a_event[ $i_fd ][ self::EV_EXCEPTION ] ) ) {
+                    $o_event = $this->a_event[ $i_fd ][ self::EV_EXCEPTION ];
+                    $o_event->free();
+                    unset( $this->a_event[ $i_fd ][ self::EV_EXCEPTION ] );
+                }
+            }
+        }
+        // 删除指定事件类型
+        else {
+            if ( isset( $this->a_event[ $i_fd ] ) ) {
+                if ( isset( $this->a_event[ $i_fd ][ $i_event_type ] ) ) {
+                    $o_event = $this->a_event[ $i_fd ][ $i_event_type ];
+                    $o_event->free();
+                    unset( $this->a_event[ $i_fd ][ $i_event_type ] );
+                }
+            }
+        }
     }
 
     /*

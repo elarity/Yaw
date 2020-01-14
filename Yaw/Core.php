@@ -1,8 +1,6 @@
 <?php
 namespace Yaw;
 use Yaw\Event\EventInterface;
-use Yaw\Event\Libevent as Libevent;
-use Yaw\Event\Select;
 use Yaw\Connection\Tcp;
 
 class Core {
@@ -198,8 +196,8 @@ class Core {
                 } else if ( 0 == $i_pid ) {
                     cli_set_process_title( "Yaw Worker Process" );
                     // 其次创建event-loop对象
-                    //$o_event_loop       = new Libevent();
-                    $o_event_loop       = new Select();
+                    $s_event_class_name = self::get_io_type();
+                    $o_event_loop       = new $s_event_class_name;
                     $o_event_loop->test = posix_getpid();
                     self::$o_event_loop = $o_event_loop;
                     // 每个子进程陷入事件循环
@@ -215,12 +213,28 @@ class Core {
                 }
             }
         }
+        cli_set_process_title("Yaw Master Process");
         // 记录mater-pid和worker-pid
         @unlink( self::$a_config['master_pid_file'] );
         @unlink( self::$a_config['worker_pid_file'] );
-        file_put_contents( self::$a_config['master_pid_file'], posix_getpid() );
-        file_put_contents( self::$a_config['worker_pid_file'], json_encode( self::$a_worker_pid ) );
-        cli_set_process_title( "Yaw Master Process" );
+        if ( true == self::$a_config['daemonize'] ) {
+            file_put_contents( self::$a_config['master_pid_file'], posix_getpid() );
+            file_put_contents( self::$a_config['worker_pid_file'], json_encode( self::$a_worker_pid ) );
+        }
+    }
+
+    /*
+     * @desc : 获取系统中io多路复用类型
+     * */
+    public static function get_io_type() {
+        // 首先查看PHP中是否已经安装了event扩展
+        if ( extension_loaded( 'event' ) ) {
+            $s_class_name = "\Yaw\Event\Libevent";
+        }
+        else {
+            $s_class_name = "\Yaw\Event\Select";
+        }
+        return $s_class_name;
     }
 
     /*
@@ -239,7 +253,7 @@ class Core {
     /*
      * @desc : daemon化
      */
-    public function daemonize() {
+    public static function daemonize() {
         if ( false === self::$a_config['daemonize'] ) {
             return;
         }
