@@ -15,6 +15,8 @@ $o_core->onReload = function() {
 $o_core->onMessage = function( $r_connection, $m_data ) {
     //echo "on-message".PHP_EOL;
     //print_r( $m_data );
+    //print_r( $r_connection );
+    $r_connection->send( "hahahahhaha" );
 };
 
 Yaw\Core::start();

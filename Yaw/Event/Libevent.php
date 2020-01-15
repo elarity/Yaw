@@ -47,21 +47,25 @@ class Libevent implements EventInterface {
         if ( self::EV_ALL === $i_event_type ) {
             if ( isset( $this->a_event[ $i_fd ] ) ) {
                 if ( isset( $this->a_event[ $i_fd ][ self::EV_WRITE ] ) ) {
+                    echo "del write".PHP_EOL;
                     $o_event = $this->a_event[ $i_fd ][ self::EV_WRITE ];
                     $o_event->free();
                     unset( $this->a_event[ $i_fd ][ self::EV_WRITE ] );
                 }
                 if ( isset( $this->a_event[ $i_fd ][ self::EV_READ ] ) ) {
+                    echo "del read".PHP_EOL;
                     $o_event = $this->a_event[ $i_fd ][ self::EV_READ ];
                     $o_event->free();
                     unset( $this->a_event[ $i_fd ][ self::EV_READ ] );
                 }
                 if ( isset( $this->a_event[ $i_fd ][ self::EV_EXCEPTION ] ) ) {
+                    echo "del exception".PHP_EOL;
                     $o_event = $this->a_event[ $i_fd ][ self::EV_EXCEPTION ];
                     $o_event->free();
                     unset( $this->a_event[ $i_fd ][ self::EV_EXCEPTION ] );
                 }
             }
+            sleep( 10000 );
         }
         // 删除指定事件类型
         else {

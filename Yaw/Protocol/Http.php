@@ -1,32 +1,7 @@
 <?php
 namespace Yaw\Protocol;
 /*
-POST /v1/user/login?version=1.12 HTTP/1.1
-Content-Type: application/x-www-form-urlencoded
-User-Agent: PostmanRuntime/7.20.1
-Accept:
-Cache-Control: no-cache
-Postman-Token: 16387e44-6fb3-469f-819f-403ce5c760f5
-Host: t.ti-node.com:6666
-Accept-Encoding: gzip, deflate
-Content-Length: 30
-Connection: keep-alive
 
-username=xiaoy&password=123456
-
-
-
-
-"GET /v1/user/login?version=1.12 HTTP/1.1
-User-Agent: PostmanRuntime/7.20.1
-Accept:
-Cache-Control: no-cache
-Postman-Token: 8bc89e78-d92e-4b19-bca3-3296a1374909
-Host: t.ti-node.com:6666
-Accept-Encoding: gzip, deflate
-Connection: keep-alive
-
-"
 */
 
 class Http {
@@ -74,6 +49,7 @@ class Http {
                 $a_http_header[ strtoupper( $s_http_header_key ) ] = $s_http_header_value;
             }
         }
+
         // 如果是post方法，处理post body
         if ( 'post' === strtolower( $s_http_method ) ) {
             $a_http_raw_post = explode( "&", $s_http_body );
@@ -84,6 +60,8 @@ class Http {
                 }
             }
         }
+
+        // 整理数据
         $a_ret = array(
             'method'   => $s_http_method,
             'version'  => $s_http_version,
