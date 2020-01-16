@@ -52,6 +52,8 @@ class Http {
 
         // 如果是post方法，处理post body
         if ( 'post' === strtolower( $s_http_method ) ) {
+            if ( 'www' == $a_http_header['CONTENT-TYPE'] ) {
+            }
             $a_http_raw_post = explode( "&", $s_http_body );
             foreach( $a_http_raw_post as $s_http_raw_body_item ) {
                 if ( '' != $s_http_raw_body_item ) {
