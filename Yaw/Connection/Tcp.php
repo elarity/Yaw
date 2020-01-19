@@ -32,7 +32,7 @@ class Tcp {
     public function read() {
         // 读取数据
         socket_recv( $this->r_connection_socket, $s_recv_content, 2048, 0 );
-        echo "收到：{$s_recv_content}";
+        //echo "收到：{$s_recv_content}";
         // 设置ev_write
         //Core::$o_event_loop->add( $this->r_connection_socket, EventInterface::EV_WRITE, array( $this, "write" ) );
         // 解析http协议

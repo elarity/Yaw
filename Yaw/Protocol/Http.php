@@ -8,15 +8,17 @@ class Http {
     // 定义下目前支持的http方法们，目前只支持get和post
     private static $a_method = array( 'get', 'post' );
     public static function decode( $s_raw_http_content ) {
-        $s_http_method      = '';
-        $s_http_version     = '';
-        $s_http_pathinfo    = '';
-        $s_http_querystring = '';
-        $a_http_post        = array();
-        $a_http_get         = array();
-        $a_http_header      = array();
+        $s_http_method       = '';
+        $s_http_version      = '';
+        $s_http_pathinfo     = '';
+        $s_http_querystring  = '';
+        $s_http_body_boundry = '';  // 当post方法且为form-data的时候.
+        $a_http_post         = array();
+        $a_http_get          = array();
+        $a_http_header       = array();
+        $a_http_file         = array();
         // 先通过两个 \r\n\r\n 把 请求行+请求头 与 请求体 分割开来.
-        list( $s_http_line_and_header, $s_http_body ) = explode( "\r\n\r\n", $s_raw_http_content );
+        list( $s_http_line_and_header, $s_http_body ) = explode( "\r\n\r\n", $s_raw_http_content, 2 );
         // 再分解$s_http_line_and_header数组
         // 数组的第一个元素一定是 请求行
         // 数组剩余所有元素就是 请求头
@@ -52,13 +54,31 @@ class Http {
 
         // 如果是post方法，处理post body
         if ( 'post' === strtolower( $s_http_method ) ) {
-            if ( 'www' == $a_http_header['CONTENT-TYPE'] ) {
+            // post 方法里要关注几种不同的content-type
+            // x-www-form-urlencoded
+            if ( 'application/x-www-form-urlencoded' == $a_http_header['CONTENT-TYPE'] ) {
+                $a_http_raw_post = explode( "&", $s_http_body );
+                // 解析http body
+                foreach( $a_http_raw_post as $s_http_raw_body_item ) {
+                    if ( '' != $s_http_raw_body_item ) {
+                        list( $s_http_raw_body_key, $s_http_raw_body_value ) = explode( "=", $s_http_raw_body_item );
+                        $a_http_post[ $s_http_raw_body_key ] = $s_http_raw_body_value;
+                    }
+                }
             }
-            $a_http_raw_post = explode( "&", $s_http_body );
-            foreach( $a_http_raw_post as $s_http_raw_body_item ) {
-                if ( '' != $s_http_raw_body_item ) {
-                    list( $s_http_raw_body_key, $s_http_raw_body_value ) = explode( "=", $s_http_raw_body_item );
-                    $a_http_post[ $s_http_raw_body_key ] = $s_http_raw_body_value;
+            // form-data
+            if ( false !== strpos( $a_http_header['CONTENT-TYPE'], 'multipart/form-data' ) ) {
+                list( $s_http_header_content_type, $s_http_body_raw_boundry ) = explode( ';', $a_http_header['CONTENT-TYPE'] );
+                $a_http_header['CONTENT-TYPE'] = trim( $s_http_header_content_type );
+                list( $_temp_unused, $s_http_body_boundry ) = explode( '=', $s_http_body_raw_boundry );
+                $s_http_body_boundry = '--'.$s_http_body_boundry;
+                $a_http_raw_post     = explode( $s_http_body_boundry."\r\n", $s_http_body );
+                foreach( $a_http_raw_post as $s_http_raw_body_item ) {
+                    if ( '' != trim( $s_http_raw_body_item ) ) {
+                        echo $s_http_raw_body_item;
+                        //$a_http_raw_body_item = explode( ';', $s_http_raw_body_item );
+                        // 判断是
+                    }
                 }
             }
         }
